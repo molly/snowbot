@@ -97,9 +97,11 @@ def get_stored_weather():
 def diff_weather(new, stored):
     """Diff the newest API response with the stored one."""
     diff = {}
+    changed = False
     for t in new:
         if stored and t in stored:
             if new[t]["max"] != stored[t]["max"] or new[t]["min"] != stored[t]["min"]:
+                changed = True
                 diff[t] = {}
                 diff[t]["date_str"] = new[t]["date_str"]
                 diff[t]["old"] = {}
@@ -114,7 +116,7 @@ def diff_weather(new, stored):
         diff[t]["new"] = {}
         diff[t]["new"]["min"] = new[t]["min"]
         diff[t]["new"]["max"] = new[t]["max"]
-    return diff
+    return diff if changed else {}
 
 
 def store_weather(new):
