@@ -38,8 +38,8 @@ api = tweepy.API(auth)
 
 under_match = re.compile(r'snow \(under (?P<max>\d+) in\.\)')
 range_match = re.compile(r'snow \((?P<min>\d+)\W(?P<max>\d+) in.\)')
-changed_text = "{0}: {1}–{2} in. snow (changed from {3}–{4})."
-new_text = "{0}: {1}–{2} in. snow."
+changed_text = "{0}: {1} in. (changed from {2})."
+new_text = "{0}: {1} in."
 
 
 def get_weather():
@@ -61,7 +61,7 @@ def parse_weather(blob):
     for t in b:
         timestamp = str(t["time"])
         weather[timestamp] = {}
-        weather[timestamp]["date_str"] = datetime.fromtimestamp(t["time"]).strftime("%a, %b %d")
+        weather[timestamp]["date_str"] = datetime.fromtimestamp(t["time"]).strftime("%a, %-m/%d")
         summary = t["summary"].lower()
         if "snow" in summary:
             if "under" in summary:
@@ -128,24 +128,27 @@ def make_sentences(diff):
     info = []
     for t in sorted(diff.keys()):
         if "old" in diff[t]:
-            info.append(changed_text.format(diff[t]["date_str"], diff[t]["new"]["min"],
-                                            diff[t]["new"]["max"], diff[t]["old"]["min"],
-                                            diff[t]["old"]["max"]))
+            old_range = "{0}–{1}".format(diff[t]["old"]["min"], diff[t]["old"]["max"]) if\
+                diff[t]["old"]["min"] != 0 else "<" + diff[t]["old"]["max"]
+            new_range = "{0}–{1}".format(diff[t]["new"]["min"], diff[t]["new"]["max"]) if \
+                diff[t]["new"]["min"] != 0 else "<" + diff[t]["new"]["max"]
+            info.append(changed_text.format(diff[t]["date_str"], new_range, old_range))
         else:
             if diff[t]["new"]["max"] != 0:
-                info.append(new_text.format(diff[t]["date_str"], diff[t]["new"]["min"],
-                                            diff[t]["new"]["max"]))
+                new_range = "{0}–{1}".format(diff[t]["new"]["min"], diff[t]["new"]["max"]) if \
+                    diff[t]["new"]["min"] != 0 else "<{}".format(diff[t]["new"]["max"])
+                info.append(new_text.format(diff[t]["date_str"], new_range))
     return info
 
 
 def form_tweets(sentences):
     """Create a tweet, or multiple tweets if the tweets are too long, out of the sentences."""
-    tweet = ""
+    tweet = "#boston #snow:"
     tweets = []
     while sentences:
         if len(tweet) + len(sentences[0]) > 139:
             tweets.append(tweet)
-            tweet = ""
+            tweet = "Boston snow (cont'd.):"
         else:
             if len(tweet) != 0:
                 tweet += "\n"
