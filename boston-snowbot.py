@@ -126,7 +126,7 @@ def diff_weather(new, stored):
 def store_weather(new):
     """Store the newest weater in the weather file for next time."""
     with open(os.path.join(__location__, "weather.json"), 'w') as f:
-        json.dump(new, f)
+        json.dump(new, f, indent=4)
 
 
 def make_sentences(diff):
@@ -161,7 +161,7 @@ def form_tweets(sentences):
     while sentences:
         if len(tweet) + len(sentences[0]) > 139:
             tweets.append(tweet)
-            tweet = ""
+            tweet = "(cont'd.):"
         else:
             if len(tweet) != 0:
                 tweet += "\n"
