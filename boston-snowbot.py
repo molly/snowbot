@@ -47,6 +47,7 @@ def get_weather():
     try:
         resp = urlopen(url)
     except URLError:
+        log("URLError when trying to hit the Forecast.io API.")
         return None
     else:
         html = resp.read().decode('utf-8')
@@ -68,10 +69,15 @@ def parse_weather(blob):
                 if m:
                     weather[timestamp]["min"] = 0
                     weather[timestamp]["max"] = int(m.group("max"))
+                else:
+                    log("Couldn't parse \"" + summary + "\" with \"under\" regex.")
             else:
                 m = re.search(range_match, summary)
-                weather[timestamp]["min"] = int(m.group("min"))
-                weather[timestamp]["max"] = int(m.group("max"))
+                if m:
+                    weather[timestamp]["min"] = int(m.group("min"))
+                    weather[timestamp]["max"] = int(m.group("max"))
+                else:
+                    log("Couldn't parse \"" + summary + "\" with \"range\" regex.")
         else:
             weather[timestamp]["min"] = 0
             weather[timestamp]["max"] = 0
@@ -137,18 +143,25 @@ def form_tweets(sentences):
     tweets = []
     while sentences:
         if len(tweet) + len(sentences[0]) > 138:
-            tweets.append(tweet)
+            tweets.append(tweet.strip())
             tweet = ""
         else:
             tweet += " " + sentences.pop(0)
-    tweets.append(tweet)
+    tweets.append(tweet.strip())
     return tweets
 
 
 def do_tweet(tweets):
     """Send out the tweets!"""
     for tweet in tweets:
-        api.update_status(tweet)
+        # api.update_status(tweet)
+        log("Tweeting: \"" + tweet + "\".")
+
+
+def log(message):
+    """Write message to a logfile."""
+    with open(os.path.join(__location__, "snowbot.log"), 'a') as f:
+        f.write("\n" + datetime.today().strftime("%H:%M %Y-%m-%d") + " " + message)
 
 
 def do_the_thing():
@@ -162,8 +175,9 @@ def do_the_thing():
     if diff:
         sentences = make_sentences(diff)
         tweets = form_tweets(sentences)
-        print tweets
-        # do_tweet(tweets)
+        do_tweet(tweets)
+    else:
+        log("No tweets!")
 
 
 if __name__ == "__main__":
