@@ -129,9 +129,9 @@ def make_sentences(diff):
     for t in sorted(diff.keys()):
         if "old" in diff[t]:
             old_range = "{0}–{1}".format(diff[t]["old"]["min"], diff[t]["old"]["max"]) if\
-                diff[t]["old"]["min"] != 0 else "<" + diff[t]["old"]["max"]
+                diff[t]["old"]["min"] != 0 else "<{}".format(diff[t]["old"]["max"])
             new_range = "{0}–{1}".format(diff[t]["new"]["min"], diff[t]["new"]["max"]) if \
-                diff[t]["new"]["min"] != 0 else "<" + diff[t]["new"]["max"]
+                diff[t]["new"]["min"] != 0 else "<{}".format(diff[t]["new"]["max"])
             info.append(changed_text.format(diff[t]["date_str"], new_range, old_range))
         else:
             if diff[t]["new"]["max"] != 0:
