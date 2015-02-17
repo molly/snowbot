@@ -126,7 +126,7 @@ def store_weather(new):
 def make_sentences(diff):
     """Create human-readable sentences out of the diff dict."""
     info = []
-    for t in diff:
+    for t in sorted(diff.keys()):
         if "old" in diff[t]:
             info.append(changed_text.format(diff[t]["date_str"], diff[t]["new"]["min"],
                                             diff[t]["new"]["max"], diff[t]["old"]["min"],
