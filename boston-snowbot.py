@@ -70,6 +70,8 @@ def parse_weather(blob):
                     weather[timestamp]["min"] = 0
                     weather[timestamp]["max"] = int(m.group("max"))
                 else:
+                    weather[timestamp]["min"] = 0
+                    weather[timestamp]["max"] = 1
                     log("Couldn't parse \"" + summary + "\" with \"under\" regex.")
             else:
                 m = re.search(range_match, summary)
@@ -77,6 +79,8 @@ def parse_weather(blob):
                     weather[timestamp]["min"] = int(m.group("min"))
                     weather[timestamp]["max"] = int(m.group("max"))
                 else:
+                    weather[timestamp]["min"] = 0
+                    weather[timestamp]["max"] = 1
                     log("Couldn't parse \"" + summary + "\" with \"range\" regex.")
         else:
             weather[timestamp]["min"] = 0
