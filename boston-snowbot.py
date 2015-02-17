@@ -30,8 +30,8 @@ from urllib2 import urlopen, URLError
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-url = "https://api.forecast.io/forecast/{}/42.3587,-71.0567?exclude=currently,minutely,hourly" \
-      "flags".format(FORECAST_KEY)
+url = "https://api.forecast.io/forecast/{}/42.3587,-71.0567?exclude=currently,minutely,hourly," \
+      "alerts,flags".format(FORECAST_KEY)
 auth = tweepy.OAuthHandler(C_KEY, C_SECRET)
 auth.set_access_token(A_TOKEN, A_TOKEN_SECRET)
 api = tweepy.API(auth)
