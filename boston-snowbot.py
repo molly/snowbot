@@ -43,7 +43,7 @@ new_text = "{0}: {1}–{2} in. snow."
 
 
 def get_weather():
-    print url
+    """Hit the Forecast.io API and return the response parsed into json."""
     try:
         resp = urlopen(url)
     except URLError:
@@ -54,6 +54,7 @@ def get_weather():
 
 
 def parse_weather(blob):
+    """Parse the JSON response to get rid of shit we don't want."""
     weather = {}
     b = blob["daily"]["data"]
     for t in b:
@@ -62,7 +63,6 @@ def parse_weather(blob):
         weather[timestamp]["date_str"] = datetime.fromtimestamp(t["time"]).strftime("%a, %b %d")
         summary = t["summary"].lower()
         if "snow" in summary:
-            print summary
             if "under" in summary:
                 m = re.search(under_match, summary)
                 if m:
@@ -78,7 +78,15 @@ def parse_weather(blob):
     return weather
 
 
+def get_stored_weather():
+    """Get the stored weather from the weather file."""
+    with open(os.path.join(__location__, "weather.json"), 'r') as f:
+        stored = json.load(f)
+    return stored
+
+
 def diff_weather(new, stored):
+    """Diff the newest API response with the stored one."""
     diff = {}
     for t in new:
         if t in stored:
@@ -99,18 +107,15 @@ def diff_weather(new, stored):
             diff[t]["new"]["max"] = new[t]["max"]
     return diff
 
-def store_weather(parsed):
+
+def store_weather(new):
+    """Store the newest weater in the weather file for next time."""
     with open(os.path.join(__location__, "weather.json"), 'w') as f:
-        json.dump(parsed, f)
-
-
-def get_stored_weather():
-    with open(os.path.join(__location__, "weather.json"), 'r') as f:
-        stored = json.load(f)
-    return stored
+        json.dump(new, f)
 
 
 def make_sentences(diff):
+    """Create human-readable sentences out of the diff dict."""
     info = []
     for t in diff:
         if "old" in diff[t]:
@@ -122,32 +127,40 @@ def make_sentences(diff):
                                         diff[t]["new"]["max"]))
     return info
 
-def form_tweets(info):
+
+def form_tweets(sentences):
+    """Create a tweet, or multiple tweets if the tweets are too long, out of the sentences."""
     tweet = ""
     tweets = []
-    while info:
-        if len(tweet) + len(info[0]) > 138:
+    while sentences:
+        if len(tweet) + len(sentences[0]) > 138:
             tweets.append(tweet)
             tweet = ""
         else:
-            tweet += " " + info.pop(0)
+            tweet += " " + sentences.pop(0)
     tweets.append(tweet)
     return tweets
 
+
 def do_tweet(tweets):
+    """Send out the tweets!"""
     for tweet in tweets:
         api.update_status(tweet)
 
 
 def do_the_thing():
+    """Hit the Forecast.io API, diff the weather with the stored weather, and tweet out any
+    differences."""
     blob = get_weather()
     new = parse_weather(blob)
     stored = get_stored_weather()
     diff = diff_weather(new, stored)
+    # store_weather(new)
     if diff:
         sentences = make_sentences(diff)
         tweets = form_tweets(sentences)
         do_tweet(tweets)
+
 
 if __name__ == "__main__":
     do_the_thing()
