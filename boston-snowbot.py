@@ -108,12 +108,12 @@ def diff_weather(new, stored):
                 diff[t]["new"] = {}
                 diff[t]["new"]["min"] = new[t]["min"]
                 diff[t]["new"]["max"] = new[t]["max"]
-        else:
-            diff[t] = {}
-            diff[t]["date_str"] = new[t]["date_str"]
-            diff[t]["new"] = {}
-            diff[t]["new"]["min"] = new[t]["min"]
-            diff[t]["new"]["max"] = new[t]["max"]
+                continue
+        diff[t] = {}
+        diff[t]["date_str"] = new[t]["date_str"]
+        diff[t]["new"] = {}
+        diff[t]["new"]["min"] = new[t]["min"]
+        diff[t]["new"]["max"] = new[t]["max"]
     return diff
 
 
@@ -128,27 +128,34 @@ def make_sentences(diff):
     info = []
     for t in sorted(diff.keys()):
         if "old" in diff[t]:
-            old_range = "{0}–{1}".format(diff[t]["old"]["min"], diff[t]["old"]["max"]) if\
-                diff[t]["old"]["min"] != 0 else "<{}".format(diff[t]["old"]["max"])
-            new_range = "{0}–{1}".format(diff[t]["new"]["min"], diff[t]["new"]["max"]) if \
-                diff[t]["new"]["min"] != 0 else "<{}".format(diff[t]["new"]["max"])
+            old_range = make_range(diff[t]["old"]["min"], diff[t]["old"]["max"])
+            new_range = make_range(diff[t]["new"]["min"], diff[t]["new"]["max"]) 
             info.append(changed_text.format(diff[t]["date_str"], new_range, old_range))
         else:
             if diff[t]["new"]["max"] != 0:
-                new_range = "{0}–{1}".format(diff[t]["new"]["min"], diff[t]["new"]["max"]) if \
-                    diff[t]["new"]["min"] != 0 else "<{}".format(diff[t]["new"]["max"])
+                new_range = make_range(diff[t]["new"]["min"], diff[t]["new"]["max"]) 
                 info.append(new_text.format(diff[t]["date_str"], new_range))
     return info
 
 
+def make_range(min, max):
+    """Format the accumulation range."""
+    if min == max == 0:
+        return 0
+    elif min == 0:
+        return "<{}".format(max)
+    else:
+        return "{}–{}".format(min, max) 
+
+
 def form_tweets(sentences):
     """Create a tweet, or multiple tweets if the tweets are too long, out of the sentences."""
-    tweet = "#boston #snow:"
+    tweet = ""
     tweets = []
     while sentences:
         if len(tweet) + len(sentences[0]) > 139:
             tweets.append(tweet)
-            tweet = "Boston snow (cont'd.):"
+            tweet = ""
         else:
             if len(tweet) != 0:
                 tweet += "\n"
