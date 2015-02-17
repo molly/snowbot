@@ -80,8 +80,11 @@ def parse_weather(blob):
 
 def get_stored_weather():
     """Get the stored weather from the weather file."""
-    with open(os.path.join(__location__, "weather.json"), 'r') as f:
-        stored = json.load(f)
+    try:
+        with open(os.path.join(__location__, "weather.json"), 'r') as f:
+            stored = json.load(f)
+    except IOError:
+        stored = None
     return stored
 
 
@@ -89,7 +92,7 @@ def diff_weather(new, stored):
     """Diff the newest API response with the stored one."""
     diff = {}
     for t in new:
-        if t in stored:
+        if stored and t in stored:
             if new[t]["max"] != stored[t]["max"] or new[t]["min"] != stored[t]["min"]:
                 diff[t] = {}
                 diff[t]["date_str"] = new[t]["date_str"]
@@ -159,7 +162,8 @@ def do_the_thing():
     if diff:
         sentences = make_sentences(diff)
         tweets = form_tweets(sentences)
-        do_tweet(tweets)
+        print tweets
+        # do_tweet(tweets)
 
 
 if __name__ == "__main__":
