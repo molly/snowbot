@@ -120,7 +120,7 @@ def diff_weather(new, stored):
         diff[t]["new"] = {}
         diff[t]["new"]["min"] = new[t]["min"]
         diff[t]["new"]["max"] = new[t]["max"]
-    return diff if changed else {}
+    return diff if changed or not stored else {}
 
 
 def store_weather(new):
