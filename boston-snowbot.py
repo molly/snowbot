@@ -143,12 +143,14 @@ def form_tweets(sentences):
     tweet = ""
     tweets = []
     while sentences:
-        if len(tweet) + len(sentences[0]) > 138:
-            tweets.append(tweet.strip())
+        if len(tweet) + len(sentences[0]) > 139:
+            tweets.append(tweet)
             tweet = ""
         else:
-            tweet += " " + sentences.pop(0)
-    tweets.append(tweet.strip())
+            if len(tweet) != 0:
+                tweet += "\n"
+            tweet += sentences.pop(0)
+    tweets.append(tweet)
     return tweets
 
 
