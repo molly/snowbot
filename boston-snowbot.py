@@ -132,8 +132,9 @@ def make_sentences(diff):
                                             diff[t]["new"]["max"], diff[t]["old"]["min"],
                                             diff[t]["old"]["max"]))
         else:
-            info.append(new_text.format(diff[t]["date_str"], diff[t]["new"]["min"],
-                                        diff[t]["new"]["max"]))
+            if diff[t]["new"]["max"] != 0:
+                info.append(new_text.format(diff[t]["date_str"], diff[t]["new"]["min"],
+                                            diff[t]["new"]["max"]))
     return info
 
 
