@@ -174,7 +174,7 @@ def do_the_thing():
     new = parse_weather(blob)
     stored = get_stored_weather()
     diff = diff_weather(new, stored)
-    # store_weather(new)
+    store_weather(new)
     if diff:
         sentences = make_sentences(diff)
         tweets = form_tweets(sentences)
