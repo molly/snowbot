@@ -87,6 +87,9 @@ def parse_weather(blob):
                     weather[timestamp]["min"] = 0
                     weather[timestamp]["max"] = 1
                     log("Couldn't parse \"" + summary + "\" with \"after\" regex.")
+            elif "light snow" in summary:
+                weather[timestamp]["min"] = 0
+                weather[timestamp]["max"] = 1
             else:
                 m = re.search(range_match, summary)
                 if m:
