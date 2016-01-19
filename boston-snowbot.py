@@ -27,6 +27,10 @@ import re
 from secrets import *
 import tweepy
 from urllib2 import urlopen, URLError
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
@@ -39,6 +43,7 @@ api = tweepy.API(auth)
 under_match = re.compile(r'snow \(under (?P<max>\d+) in\.\)')
 range_match = re.compile(r'snow \((?P<min>\d+)\W(?P<max>\d+) in.\)')
 changed_text = "{0}: {1} in. (prev. {2})."
+after_match = re.compile(r'\((?P<min>\d+)\W(?P<max>\d+) in. of snow\)')
 new_text = "{0}: {1} in."
 
 
@@ -73,6 +78,15 @@ def parse_weather(blob):
                     weather[timestamp]["min"] = 0
                     weather[timestamp]["max"] = 1
                     log("Couldn't parse \"" + summary + "\" with \"under\" regex.")
+            elif "of snow" in summary:
+                m = re.search(after_match, summary)
+                if m:
+                    weather[timestamp]["min"] = int(m.group("min"))
+                    weather[timestamp]["max"] = int(m.group("max"))
+                else:
+                    weather[timestamp]["min"] = 0
+                    weather[timestamp]["max"] = 1
+                    log("Couldn't parse \"" + summary + "\" with \"after\" regex.")
             else:
                 m = re.search(range_match, summary)
                 if m:
@@ -173,14 +187,14 @@ def form_tweets(sentences):
 def do_tweet(tweets):
     """Send out the tweets!"""
     for tweet in tweets:
-        # api.update_status(tweet)
+        api.update_status(tweet)
         log("Tweeting: \"" + tweet + "\".")
 
 
 def log(message):
     """Write message to a logfile."""
     with open(os.path.join(__location__, "snowbot.log"), 'a') as f:
-        f.write("\n" + datetime.today().strftime("%H:%M %Y-%m-%d") + " " + message)
+        f.write(("\n" + datetime.today().strftime("%H:%M %Y-%m-%d") + " " + message).encode('utf-8'))
 
 
 def do_the_thing():
