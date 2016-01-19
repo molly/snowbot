@@ -38,7 +38,7 @@ api = tweepy.API(auth)
 
 under_match = re.compile(r'snow \(under (?P<max>\d+) in\.\)')
 range_match = re.compile(r'snow \((?P<min>\d+)\W(?P<max>\d+) in.\)')
-changed_text = "{0}: {1} in. (changed from {2})."
+changed_text = "{0}: {1} in. (prev. {2})."
 new_text = "{0}: {1} in."
 
 
