@@ -26,7 +26,7 @@ import os
 import re
 from secrets import *
 import tweepy
-from urllib2 import urlopen, URLError
+from urllib2 import build_opener, URLError
 import sys
 
 reload(sys)
@@ -36,21 +36,28 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 
 url = "https://api.darksky.net/forecast/{}/42.3587,-71.0567?exclude=currently,minutely,hourly," \
       "alerts,flags".format(FORECAST_KEY)
+french_toast_url = "http://www.universalhub.com/toast.xml"
+
 auth = tweepy.OAuthHandler(C_KEY, C_SECRET)
 auth.set_access_token(A_TOKEN, A_TOKEN_SECRET)
 api = tweepy.API(auth)
+
+opener = build_opener()
+opener.addheaders = [('User-Agent', 'Boston Snowbot (https://github.com/molly/boston-snowbot)')]
 
 under_match = re.compile(r'snow \(under (?P<max>\d+) in\.\)')
 range_match = re.compile(r'snow \((?P<min>\d+)\W(?P<max>\d+) in.\)')
 changed_text = "{0}: {1} in. (prev. {2})."
 after_match = re.compile(r'\((?P<min>\d+)\W(?P<max>\d+) in. of snow\)')
 new_text = "{0}: {1} in."
+changed_french_toast = "French toast level: {0}. (prev. {1})"
+new_french_toast = "French toast level: {0}"
 
 
 def get_weather():
     """Hit the Forecast.io API and return the response parsed into json."""
     try:
-        resp = urlopen(url)
+        resp = opener.open(url)
     except URLError:
         log("URLError when trying to hit the DarkSky API.")
         return None
@@ -58,6 +65,18 @@ def get_weather():
         html = resp.read().decode('utf-8')
         return json.loads(html)
 
+
+def get_french_toast_level():
+    """Hit the french toast alert system to get the current french toast level."""
+    try:
+        resp = opener.open(french_toast_url)
+    except URLError as e:
+        log("URLError when trying to hit the french toast API.")
+        return None
+    else:
+        body = resp.read().decode('utf-8')
+        m = re.search(r'<status>(.*?)</status>', body)
+        return m.group(1) if m else None
 
 def parse_weather(blob):
     """Parse the JSON response to get rid of shit we don't want."""
@@ -105,7 +124,7 @@ def parse_weather(blob):
     return weather
 
 
-def get_stored_weather():
+def get_stored():
     """Get the stored weather from the weather file."""
     try:
         with open(os.path.join(__location__, "weather.json"), 'r') as f:
@@ -117,26 +136,39 @@ def get_stored_weather():
 
 def diff_weather(new, stored):
     """Diff the newest API response with the stored one."""
-    diff = {}
+    diff = {
+        "weather": {},
+        "french_toast": {}
+    }
     changed = False
-    for t in new:
+    for t in new["weather"]:
         if stored and t in stored:
-            if new[t]["max"] != stored[t]["max"] or new[t]["min"] != stored[t]["min"]:
+            if new["weather"][t]["max"] != stored[t]["max"] or new["weather"][t]["min"] != stored[t]["min"]:
                 changed = True
-                diff[t] = {}
-                diff[t]["date_str"] = new[t]["date_str"]
-                diff[t]["old"] = {}
-                diff[t]["old"]["min"] = stored[t]["min"]
-                diff[t]["old"]["max"] = stored[t]["max"]
-                diff[t]["new"] = {}
-                diff[t]["new"]["min"] = new[t]["min"]
-                diff[t]["new"]["max"] = new[t]["max"]
+                diff["weather"][t] = {}
+                diff["weather"][t]["date_str"] = new["weather"][t]["date_str"]
+                diff["weather"][t]["old"] = {}
+                diff["weather"][t]["old"]["min"] = stored[t]["min"]
+                diff["weather"][t]["old"]["max"] = stored[t]["max"]
+                diff["weather"][t]["new"] = {}
+                diff["weather"][t]["new"]["min"] = new["weather"][t]["min"]
+                diff["weather"][t]["new"]["max"] = new["weather"][t]["max"]
                 continue
-        diff[t] = {}
-        diff[t]["date_str"] = new[t]["date_str"]
-        diff[t]["new"] = {}
-        diff[t]["new"]["min"] = new[t]["min"]
-        diff[t]["new"]["max"] = new[t]["max"]
+        diff["weather"][t] = {}
+        diff["weather"][t]["date_str"] = new["weather"][t]["date_str"]
+        diff["weather"][t]["new"] = {}
+        diff["weather"][t]["new"]["min"] = new["weather"][t]["min"]
+        diff["weather"][t]["new"]["max"] = new["weather"][t]["max"]
+    if new["french_toast"]:
+        if stored and "french_toast" in stored and stored["french_toast"] != new["french_toast"]:
+            changed = True
+            diff["french_toast"] = {}
+            diff["french_toast"]["old"] = stored["french_toast"]
+            diff["french_toast"]["new"] = new["french_toast"]
+        else:
+            diff["french_toast"] = {}
+            diff["french_toast"]["new"] = new["french_toast"]
+
     return diff if changed or not stored else {}
 
 
@@ -146,18 +178,40 @@ def store_weather(new):
         json.dump(new, f, indent=4)
 
 
+def bread_and_milk_with_embellishment(french_toast):
+    tweet = []
+    if "old" in french_toast:
+        tweet.append(changed_french_toast.format(french_toast["old"], french_toast["new"]))
+    else:
+        tweet.append(new_french_toast.format(french_toast["new"]))
+
+    if french_toast["new"] == "severe":
+        tweet.append('🔴 🚨 🔴 🚨 🔴 🚨 🔴')
+        tweet.append("\n")
+        tweet.append("http://mollywhite.net/storage/severe.jpg")
+    elif french_toast["new"] == "high":
+        tweet.append('⚠️ ⚠️ ⚠️')
+        tweet.append("\n")
+        tweet.append("http://mollywhite.net/storage/high.jpg")
+    return tweet
+
+
 def make_sentences(diff):
     """Create human-readable sentences out of the diff dict."""
     info = []
-    for t in sorted(diff.keys()):
-        if "old" in diff[t]:
-            old_range = make_range(diff[t]["old"]["min"], diff[t]["old"]["max"])
-            new_range = make_range(diff[t]["new"]["min"], diff[t]["new"]["max"])
-            info.append(changed_text.format(diff[t]["date_str"], new_range, old_range))
+    for t in sorted(diff["weather"].keys()):
+        if "old" in diff["weather"][t]:
+            old_range = make_range(diff["weather"][t]["old"]["min"], diff["weather"][t]["old"]["max"])
+            new_range = make_range(diff["weather"][t]["new"]["min"], diff["weather"][t]["new"]["max"])
+            info.append(changed_text.format(diff["weather"][t]["date_str"], new_range, old_range))
         else:
-            if diff[t]["new"]["max"] != 0:
-                new_range = make_range(diff[t]["new"]["min"], diff[t]["new"]["max"])
-                info.append(new_text.format(diff[t]["date_str"], new_range))
+            if diff["weather"][t]["new"]["max"] != 0:
+                new_range = make_range(diff["weather"][t]["new"]["min"], diff["weather"][t]["new"]["max"])
+                info.append(new_text.format(diff["weather"][t]["date_str"], new_range))
+    if info and "old" in diff["french_toast"]:
+        info.append(changed_french_toast.format(diff["french_toast"]["old"], diff["french_toast"]["new"]))
+    else:
+        return bread_and_milk_with_embellishment(diff["french_toast"])
     return info
 
 
@@ -203,9 +257,12 @@ def log(message):
 def do_the_thing():
     """Hit the DarkSky API, diff the weather with the stored weather, and tweet out any
     differences."""
+    new = {}
     blob = get_weather()
-    new = parse_weather(blob)
-    stored = get_stored_weather()
+    french_toast = get_french_toast_level()
+    new["weather"] = parse_weather(blob)
+    new["french_toast"] = french_toast
+    stored = get_stored()
     diff = diff_weather(new, stored)
     store_weather(new)
     if diff:
@@ -214,7 +271,6 @@ def do_the_thing():
         do_tweet(tweets)
     else:
         log("No tweets!")
-
 
 if __name__ == "__main__":
     do_the_thing()
