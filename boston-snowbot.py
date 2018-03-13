@@ -187,12 +187,10 @@ def bread_and_milk_with_embellishment(french_toast):
 
     if french_toast["new"] == "severe":
         tweet.append('🔴 🚨 🔴 🚨 🔴 🚨 🔴')
-        tweet.append("\n")
-        tweet.append("http://mollywhite.net/storage/severe.jpg")
     elif french_toast["new"] == "high":
         tweet.append('⚠️ ⚠️ ⚠️')
-        tweet.append("\n")
-        tweet.append("http://mollywhite.net/storage/high.jpg")
+        
+    tweet.append("\n\nhttp://www.universalhub.com/french-toast")
     return tweet
 
 
