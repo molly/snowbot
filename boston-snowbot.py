@@ -257,9 +257,8 @@ def do_the_thing():
     differences."""
     new = {}
     blob = get_weather()
-    french_toast = get_french_toast_level()
     new["weather"] = parse_weather(blob)
-    new["french_toast"] = french_toast
+    new["french_toast"] = get_french_toast_level()
     stored = get_stored()
     diff = diff_weather(new, stored)
     store_weather(new)
