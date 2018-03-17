@@ -88,7 +88,7 @@ def parse_weather(blob):
         weather[timestamp]["date_str"] = datetime.fromtimestamp(t["time"]).strftime("%a, %-m/%d")
         summary = t["summary"].lower()
         if "snow" in summary:
-            if "under" in summary:
+            if "under" in summary or "<" in summary:
                 m = re.search(under_match, summary)
                 if m:
                     weather[timestamp]["min"] = 0
