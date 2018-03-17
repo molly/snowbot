@@ -45,7 +45,7 @@ api = tweepy.API(auth)
 opener = build_opener()
 opener.addheaders = [('User-Agent', 'Boston Snowbot (https://github.com/molly/boston-snowbot)')]
 
-under_match = re.compile(r'snow \(under (?P<max>\d+) in\.\)')
+under_match = re.compile(r'snow \((?:under|<) (?P<max>\d+) in\.\)')
 range_match = re.compile(r'snow \((?P<min>\d+)\W(?P<max>\d+) in.\)')
 changed_text = "{0}: {1} in. (prev. {2})."
 after_match = re.compile(r'\((?P<min>\d+)\W(?P<max>\d+) in. of snow\)')
