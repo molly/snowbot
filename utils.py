@@ -25,7 +25,7 @@ import os
 import requests
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-headers = {'User-Agent', 'Boston Snowbot (https://github.com/molly/boston-snowbot)'}
+headers = {'User-Agent': 'Boston Snowbot (https://github.com/molly/boston-snowbot)'}
 
 
 def log(message):
