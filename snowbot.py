@@ -80,12 +80,12 @@ def process_french_toast(text):
 
 def get_stored_weather():
     """Get the stored weather from the previous run."""
+    stored = None
     try:
         with open(os.path.join(__location__, "weather.json"), 'r') as f:
             stored = json.load(f)
-    except IOError:
-        stored = None
-    return stored
+    finally:
+        return stored
 
 
 def diff_weather(new, stored):
