@@ -1,3 +1,5 @@
+#!/usr/bin/python
+#  -*- coding: utf-8 -*-
 # Copyright (c) 2015–2020 Molly White
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -36,16 +38,16 @@ french_toast_url = "http://universalhub.com/toast.xml"
 
 def get_weather():
     """Fetch forecast from DarkSky API."""
-    with open(os.path.join(__location__, "tmp.json"), 'r') as f:
-        return json.load(f)
-    # return fetch(forecast_url, is_json=True)
+    # with open(os.path.join(__location__, "tmp.json"), 'r') as f:
+    #     return json.load(f)
+    return fetch(forecast_url, is_json=True)
 
 
 def get_french_toast():
     """Fetch french toast level from Universal Hub."""
-    with open(os.path.join(__location__, "tmp_f.xml"), 'r') as f:
-        return f.read()
-    # return fetch(french_toast_url)
+    # with open(os.path.join(__location__, "tmp_f.xml"), 'r') as f:
+    #     return f.read()
+    return fetch(french_toast_url)
 
 
 def process_weather(blob):
