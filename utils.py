@@ -46,5 +46,5 @@ def fetch(url, is_json = False):
         log("HTTP error when trying to hit {}".format(url))
     else:
         if is_json:
-            return resp.json
+            return resp.json()
         return resp.text
