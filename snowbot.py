@@ -18,7 +18,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+
+import json
+import os
+from secrets import *
+
+forecast_url = "https://api.darksky.net/forecast/{}/42.3587,-71.0567?exclude=currently,minutely,hourly,flags" \
+               "&lang=en&units=us".format(FORECAST_KEY)
+
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+def get_weather():
+    with open(os.path.join(__location__, "tmp.json"), 'r') as f:
+        return json.load(f)
+    # try:
+    #     resp = opener.open(url)
+    # except URLError:
+    #     log("URLError when trying to hit the DarkSky API.")
+    #     return None
+    # else:
+    #     blob = resp.read().decode('utf-8')
+    #     return json.loads(blob)
+
 def main():
+    weather = get_weather()
 
 if __name__ == "__main__":
     main()
