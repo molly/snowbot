@@ -95,7 +95,7 @@ def diff_weather(new, stored):
     }
     changed = False
     for day in new["weather"]:
-        if stored and day in stored["weather"]:
+        if stored and "weather" in stored and day in stored["weather"]:
             if new["weather"][day]["accumulation"] != stored["weather"][day]["accumulation"]:
                 changed = True
                 diff["weather"][day] = {
