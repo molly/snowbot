@@ -129,7 +129,7 @@ def store_weather(new):
 def get_accumulation_str(inches):
     """Round the float to the nearest integer, and display <1 if it rounds to 0."""
     rounded = round(inches)
-    return str(rounded) if rounded > 0 else "<1"
+    return str(int(rounded)) if rounded > 0 else "<1"
 
 
 def make_weather_sentences(diff):
