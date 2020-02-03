@@ -57,3 +57,4 @@ secrets.py
 .idea/
 weather.json
 snowbot.log
+venv/
