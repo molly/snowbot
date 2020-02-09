@@ -159,7 +159,7 @@ def make_french_toast_sentence(diff):
     if "toast" in diff:
         if "old" in diff["toast"]:
             return "New french toast alert level: {0} (prev. {1})".format(diff["toast"]["new"], diff["toast"]["old"])
-        elif diff["toast"]["new"] != "low":
+        elif "new" in diff["toast"] and diff["toast"]["new"] != "low":
             return "New french toast alert level: {0}".format(diff["toast"]["new"])
     return None
 
@@ -219,22 +219,25 @@ def do_tweet(tweets):
 
 
 def main():
-    new = {}
-    weather = get_weather()
-    if not weather:
-        # Something's gone wrong, we've logged the issue, don't try to continue.
-        return
-    french_toast = get_french_toast()
-    new["weather"] = process_weather(weather)
-    new["toast"] = process_french_toast(french_toast)
-    stored = get_stored_weather()
-    diff = diff_weather(new, stored)
-    store_weather(new)
-    if diff:
-        weather_sentences = make_weather_sentences(diff)
-        french_toast_sentence = make_french_toast_sentence(diff)
-        tweets = make_tweets(weather_sentences, french_toast_sentence, diff["toast"])
-        do_tweet(tweets)
+    try:
+        new = {}
+        weather = get_weather()
+        if not weather:
+            # Something's gone wrong, we've logged the issue, don't try to continue.
+            return
+        french_toast = get_french_toast()
+        new["weather"] = process_weather(weather)
+        new["toast"] = process_french_toast(french_toast)
+        stored = get_stored_weather()
+        diff = diff_weather(new, stored)
+        store_weather(new)
+        if diff:
+            weather_sentences = make_weather_sentences(diff)
+            french_toast_sentence = make_french_toast_sentence(diff)
+            tweets = make_tweets(weather_sentences, french_toast_sentence, diff["toast"])
+            do_tweet(tweets)
+    except Exception as e:
+        log(e)
 
 
 if __name__ == "__main__":
