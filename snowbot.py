@@ -237,6 +237,10 @@ def main():
             tweets = make_tweets(weather_sentences, french_toast_sentence, diff["toast"])
             if tweets:
                 do_tweet(tweets)
+            else:
+                log("Tweets were empty, not tweeting")
+        else:
+            log("No diff, so no sentences.")
     except Exception as e:
         log(e)
 
