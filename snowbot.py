@@ -235,7 +235,8 @@ def main():
             weather_sentences = make_weather_sentences(diff)
             french_toast_sentence = make_french_toast_sentence(diff)
             tweets = make_tweets(weather_sentences, french_toast_sentence, diff["toast"])
-            do_tweet(tweets)
+            if tweets:
+                do_tweet(tweets)
     except Exception as e:
         log(e)
 
