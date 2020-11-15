@@ -27,12 +27,12 @@ import re
 import requests
 import tweepy
 
+from french_toast import get_french_toast
 from config import *
 from secrets import *
 from utils import *
 
 FORECAST_API_URL = "https://api.weather.gov/gridpoints/{office}/{grid_x},{grid_y}"
-HEADERS = {"user_agent": "{name} {url}".format(name=APP_NAME, url=REPO_URL)}
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 
@@ -157,7 +157,7 @@ def make_tweets(sentences, append=None):
     tweet = ""
     tweets = []
     if append:
-        sentences = sentences.push(append)
+        sentences.append(append)
     while sentences:
         if len(tweet) + len(sentences[0]) > 279:
             # Append what we have and start a new tweet.
@@ -172,27 +172,56 @@ def make_tweets(sentences, append=None):
 
 
 def send_tweets(tweets):
+    auth = tweepy.OAuthHandler(CONSUMER_API_KEY, CONSUMER_API_SECRET)
+    auth.set_access_token(ACCESS_KEY, ACCESS_TOKEN)
+    api = tweepy.API(auth)
     for tweet in tweets:
-        print(tweet)
+        try:
+            api.update_status(tweet)
+            log('Tweeted: "' + tweet)
+        except tweepy.TweepError as e:
+            log("Failed to tweet: " + e.reason)
 
 
 def store_forecast(current_forecast):
     forecast_to_store = {}
-    # for key, val in current_forecast.items():
-    #     forecast_to_store[key.isoformat()] = val
-    # with open(os.path.join(__location__, "weather.json"), "w") as f:
-    #     json.dump(forecast_to_store, f, indent=2)
+    for key, val in current_forecast.items():
+        forecast_to_store[key.isoformat()] = val
+    with open(os.path.join(__location__, "weather.json"), "w") as f:
+        json.dump(forecast_to_store, f, indent=2)
 
 
 def run():
+    # Gather forecast, etc. data
     snow_data = get_snow_data()
     date_range = get_date_range()
     current_forecast = parse_snow_data(snow_data, date_range)
     prev_forecast = get_stored_snow_data()
     diff = diff_forecasts(current_forecast, prev_forecast, date_range)
+    if ENABLE_FRENCH_TOAST:
+        toast_details = get_french_toast()
+
+    # Form tweets
     sentences = make_forecast_sentences(diff, date_range)
-    tweets = make_tweets(sentences)
-    send_tweets(tweets)
+    if ENABLE_FRENCH_TOAST:
+        tweets = make_tweets(sentences, toast_details["sentence"])
+    else:
+        tweets = make_tweets(sentences)
+
+    # Send tweets
+    if len(tweets):
+        send_tweets(tweets)
+    else:
+        print("No changed forecast to tweet.")
+    if ENABLE_FRENCH_TOAST:
+        should_tweet_gif = get_should_tweet_gif(
+            toast_details["current_toast_level"], toast_details["gif_last_tweeted"]
+        )
+        if should_tweet_gif:
+            log("Tweeting toast gif at " + datetime.now().isoformat())
+            send_tweets([SEVERE_TOAST_GIF])
+
+    # Store forecast for next time
     store_forecast(current_forecast)
 
 

@@ -23,9 +23,11 @@
 from datetime import datetime
 import os
 import requests
+import time
+from config import *
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-headers = {"User-Agent": "Boston Snowbot (https://github.com/molly/boston-snowbot)"}
+HEADERS = {"user-agent": "{name} {url}".format(name=APP_NAME, url=REPO_URL)}
 
 
 def log(message):
@@ -37,7 +39,7 @@ def log(message):
 def fetch(url, is_json=False):
     """Make a request to a URL, and handle errors as needed."""
     try:
-        resp = requests.get(url, headers=headers, timeout=5)
+        resp = requests.get(url, headers=HEADERS, timeout=5)
     except requests.exceptions.Timeout:
         log("Request timed out when trying to hit {}".format(url))
     except requests.exceptions.ConnectionError:
@@ -62,3 +64,9 @@ def get_accumulation_string(accum):
     if inches < 1:
         return "<1"
     return round(inches, 1)
+
+
+def get_should_tweet_gif(severity, time_last_tweeted):
+    return severity == "severe" and (
+        not time_last_tweeted or time.time() - time_last_tweeted > TOAST_GIF_DELAY
+    )
