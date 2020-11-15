@@ -119,7 +119,9 @@ def diff_forecasts(current_forecast, prev_forecast, date_range):
     diff = {}
     for d in date_range:
         isodate = d.isoformat()
-        if not (prev_forecast or isodate in prev_forecast) and current_forecast[d] > 0:
+        if (not prev_forecast or isodate not in prev_forecast) and current_forecast[
+            d
+        ] > 0:
             diff[d] = {"new": current_forecast[d]}
         elif prev_forecast and prev_forecast[isodate] != current_forecast[d]:
             diff[d] = {
