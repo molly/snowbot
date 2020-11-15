@@ -212,13 +212,13 @@ def run():
     if len(tweets):
         send_tweets(tweets)
     else:
-        print("No changed forecast to tweet.")
+        log("No changed forecast to tweet.")
     if ENABLE_FRENCH_TOAST:
         should_tweet_gif = get_should_tweet_gif(
             toast_details["current_toast_level"], toast_details["gif_last_tweeted"]
         )
         if should_tweet_gif:
-            log("Tweeting toast gif at " + datetime.now().isoformat())
+            log("Tweeting toast gif.")
             send_tweets([SEVERE_TOAST_GIF])
 
     # Store forecast for next time
