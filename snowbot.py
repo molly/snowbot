@@ -171,7 +171,8 @@ def make_tweets(sentences, append=None):
                 if len(sentences) == 1 and append:
                     tweet += "\n"
             tweet += sentences.pop(0)
-    tweets.append(tweet)
+    if len(tweet):
+        tweets.append(tweet)
     return tweets
 
 
