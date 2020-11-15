@@ -159,13 +159,15 @@ def make_tweets(sentences, append=None):
     if append:
         sentences.append(append)
     while sentences:
-        if len(tweet) + len(sentences[0]) > 279:
+        if len(tweet) + len(sentences[0]) > 278:
             # Append what we have and start a new tweet.
             tweets.append(tweet)
             tweet = "(cont'd.):"
         else:
             if len(tweet) != 0:
                 tweet += "\n"
+                if len(sentences) == 1 and append:
+                    tweet += "\n"
             tweet += sentences.pop(0)
     tweets.append(tweet)
     return tweets
