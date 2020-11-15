@@ -53,7 +53,7 @@ docs/_build/
 # PyBuilder
 target/
 
-secrets.py
+#secrets.py
 .DS_Store
 .idea/
 weather.json
