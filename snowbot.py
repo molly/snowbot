@@ -1,5 +1,3 @@
-#!/usr/bin/python
-#  -*- coding: utf-8 -*-
 # Copyright (c) 2015–2020 Molly White
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,13 +27,13 @@ import re
 import requests
 import tweepy
 
-from utils import fetch, log
-
 from config import *
 from secrets import *
+from utils import *
 
 FORECAST_API_URL = "https://api.weather.gov/gridpoints/{office}/{grid_x},{grid_y}"
 HEADERS = {"user_agent": "{name} {url}".format(name=APP_NAME, url=REPO_URL)}
+__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 
 def get_date_range():
@@ -45,13 +43,49 @@ def get_date_range():
 
 def get_snow_data():
     url = FORECAST_API_URL.format(office=OFFICE, grid_x=GRID_X, grid_y=GRID_Y)
-    resp = requests.get(url, headers=HEADERS)
-    resp.raise_for_status()
-    data = resp.json()
+    data = fetch(url, True)
     return {
         "snowfallAmount": data["properties"]["snowfallAmount"],
         "probabilityOfPrecipitation": data["properties"]["probabilityOfPrecipitation"],
     }
+
+
+def get_probability_for_duration(datetime_str, start_time, duration, data):
+    numeric_duration = int(duration.strip("H"))
+    total_duration = 0
+    probability = []
+    ind, curr_probability = next(
+        (
+            (ind, x)
+            for ind, x in enumerate(data["probabilityOfPrecipitation"]["values"])
+            if x["validTime"].startswith(datetime_str)
+        ),
+        (None, None),
+    )
+    if ind is None:
+        log("Couldn't find corresponding probability for snowfall period")
+        return 0
+    else:
+        curr_duration = parse_duration_string(curr_probability["validTime"])[1]
+        if curr_duration != duration:
+            while total_duration < numeric_duration:
+                numeric_curr_duration = int(curr_duration.strip("H"))
+                total_duration += numeric_curr_duration
+                probability.append(
+                    {
+                        "numeric_duration": numeric_curr_duration,
+                        "probability": curr_probability["value"],
+                    }
+                )
+                ind += 1
+                curr_probability = data["probabilityOfPrecipitation"]["values"][ind]
+                curr_duration = parse_duration_string(curr_probability["validTime"])[1]
+            hourly_probability = sum(
+                [x["probability"] * x["numeric_duration"] for x in probability]
+            ) / sum([x["numeric_duration"] for x in probability])
+            return hourly_probability
+        else:
+            return curr_probability["value"]
 
 
 def parse_snow_data(data, date_range):
@@ -60,31 +94,106 @@ def parse_snow_data(data, date_range):
     amounts = data["snowfallAmount"]["values"]
     for amount in amounts:
         if amount["value"] > 0:
-            [datetime_str, duration] = amount["validTime"].split("/PT")
+            [datetime_str, duration] = parse_duration_string(amount["validTime"])
             start_time = datetime.fromisoformat(datetime_str).astimezone(tz)
             if start_time.date() in weather:
-                prob = next(
-                    (
-                        x
-                        for x in data["probabilityOfPrecipitation"]["values"]
-                        if x["validTime"] == amount["validTime"]
-                    ),
-                    None,
+                # Find probability of snowfall for this given duration
+                probability = get_probability_for_duration(
+                    datetime_str, start_time, duration, data
                 )
-                if prob:
-                    if prob > 50:
-                        weather[start_time.date()] += amount["value"]
-                else:
-                    print("oh no")
-    print("hi")
+                if probability >= PROBABILITY_THRESHOLD:
+                    weather[start_time.date()] += amount["value"]
     return weather
+
+
+def get_stored_snow_data():
+    stored = None
+    try:
+        with open(os.path.join(__location__, "weather.json"), "r") as f:
+            stored = json.load(f)
+    finally:
+        return stored
+
+
+def diff_forecasts(current_forecast, prev_forecast, date_range):
+    diff = {}
+    for d in date_range:
+        isodate = d.isoformat()
+        if not (prev_forecast or isodate in prev_forecast) and current_forecast[d] > 0:
+            diff[d] = {"new": current_forecast[d]}
+        elif prev_forecast and prev_forecast[isodate] != current_forecast[d]:
+            diff[d] = {
+                "new": current_forecast[d],
+                "old": prev_forecast[isodate],
+            }
+    return diff
+
+
+def make_forecast_sentences(diff, date_range):
+    if not diff:
+        return
+    sentences = []
+    for d in date_range:
+        if d in diff:
+            if "old" in diff[d]:
+                sentences.append(
+                    "{0}: {1} in. (prev. {2})".format(
+                        d.strftime("%a, %-m/%d"),
+                        get_accumulation_string(diff[d]["new"]),
+                        get_accumulation_string(diff[d]["old"]),
+                    )
+                )
+            else:
+                sentences.append(
+                    "{0}: {1} in.".format(
+                        d.strftime("%a, %-m/%d"),
+                        get_accumulation_string(diff[d]["new"]),
+                    )
+                )
+    return sentences
+
+
+def make_tweets(sentences, append=None):
+    tweet = ""
+    tweets = []
+    if append:
+        sentences = sentences.push(append)
+    while sentences:
+        if len(tweet) + len(sentences[0]) > 279:
+            # Append what we have and start a new tweet.
+            tweets.append(tweet)
+            tweet = "(cont'd.):"
+        else:
+            if len(tweet) != 0:
+                tweet += "\n"
+            tweet += sentences.pop(0)
+    tweets.append(tweet)
+    return tweets
+
+
+def send_tweets(tweets):
+    for tweet in tweets:
+        print(tweet)
+
+
+def store_forecast(current_forecast):
+    forecast_to_store = {}
+    # for key, val in current_forecast.items():
+    #     forecast_to_store[key.isoformat()] = val
+    # with open(os.path.join(__location__, "weather.json"), "w") as f:
+    #     json.dump(forecast_to_store, f, indent=2)
 
 
 def run():
     snow_data = get_snow_data()
     date_range = get_date_range()
-    parse_snow_data(snow_data, date_range)
-    print("hi")
+    current_forecast = parse_snow_data(snow_data, date_range)
+    prev_forecast = get_stored_snow_data()
+    diff = diff_forecasts(current_forecast, prev_forecast, date_range)
+    sentences = make_forecast_sentences(diff, date_range)
+    tweets = make_tweets(sentences)
+    send_tweets(tweets)
+    store_forecast(current_forecast)
 
 
 if __name__ == "__main__":

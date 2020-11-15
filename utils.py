@@ -25,16 +25,16 @@ import os
 import requests
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-headers = {'User-Agent': 'Boston Snowbot (https://github.com/molly/boston-snowbot)'}
+headers = {"User-Agent": "Boston Snowbot (https://github.com/molly/boston-snowbot)"}
 
 
 def log(message):
     """Write message to a logfile."""
-    with open(os.path.join(__location__, "snowbot.log"), 'a') as f:
+    with open(os.path.join(__location__, "snowbot.log"), "a") as f:
         f.write("\n" + datetime.today().strftime("%H:%M %Y-%m-%d") + " " + message)
 
 
-def fetch(url, is_json = False):
+def fetch(url, is_json=False):
     """Make a request to a URL, and handle errors as needed."""
     try:
         resp = requests.get(url, headers=headers, timeout=5)
@@ -48,3 +48,17 @@ def fetch(url, is_json = False):
         if is_json:
             return resp.json()
         return resp.text
+
+
+def parse_duration_string(validTime):
+    """Return [datestring, duration] for a given validTime"""
+    return validTime.split("/PT")
+
+
+def get_accumulation_string(accum):
+    if accum == 0:
+        return 0
+    inches = accum * (1 / 25.4)
+    if inches < 1:
+        return "<1"
+    return round(inches, 1)
