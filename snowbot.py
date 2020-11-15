@@ -177,7 +177,7 @@ def make_tweets(sentences, append=None):
 
 def send_tweets(tweets):
     auth = tweepy.OAuthHandler(CONSUMER_API_KEY, CONSUMER_API_SECRET)
-    auth.set_access_token(ACCESS_KEY, ACCESS_TOKEN)
+    auth.set_access_token(ACCESS_TOKEN, ACCESS_KEY)
     api = tweepy.API(auth)
     for tweet in tweets:
         try:
