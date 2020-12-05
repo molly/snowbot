@@ -68,14 +68,10 @@ def make_french_toast_sentence(current, stored):
             current, stored
         )
     elif not stored and current and current != "low":
-        sentence = "New french toast alert level: {0}".format(current)
+        cased_current = current[0].upper() + current[1:]
+        sentence = "New french toast alert level: {0}".format(cased_current)
     if len(sentence) > 0:
-        return (
-            make_french_toast_emojis(current)
-            + "\n"
-            + sentence
-            + "\nhttps://www.universalhub.com/french-toast"
-        )
+        return make_french_toast_emojis(current) + "\n" + sentence
     return None
 
 
