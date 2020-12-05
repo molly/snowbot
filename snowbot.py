@@ -127,7 +127,7 @@ def diff_forecasts(current_forecast, prev_forecast, date_range):
             prev_forecast
             and isodate in prev_forecast
             and prev_forecast[isodate] != current_forecast[d]
-            and not (prev_forecast[isodate] < 1 and current_forecast[d] < 1)
+            and not (0 < prev_forecast[isodate] < 1 and 0 < current_forecast[d] < 1)
         ):
             diff[d] = {
                 "new": current_forecast[d],
