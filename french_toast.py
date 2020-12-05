@@ -81,7 +81,7 @@ def store_french_toast(current, gif_last_tweeted):
         json.dump(toast_to_store, f, indent=2)
 
 
-def get_french_toast():
+def get_french_toast(dry_run):
     toast = fetch_french_toast()
     stored_toast = get_stored_toast_data()
     sentence = make_french_toast_sentence(
@@ -89,7 +89,8 @@ def get_french_toast():
     )
     gif_last_tweeted = stored_toast["gif_last_tweeted"] if stored_toast else None
     should_tweet_gif = get_should_tweet_gif(toast, gif_last_tweeted)
-    store_french_toast(toast, time.time() if should_tweet_gif else gif_last_tweeted)
+    if not dry_run:
+        store_french_toast(toast, time.time() if should_tweet_gif else gif_last_tweeted)
     return {
         "current_toast_level": toast,
         "sentence": sentence,

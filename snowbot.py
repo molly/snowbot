@@ -142,10 +142,10 @@ def make_forecast_sentences(diff, date_range):
             if (
                 "old" in diff[d]
                 and diff[d]["new"] != diff[d]["old"]
-                and not (0 < diff[d]["new"] < 1 and 0 < diff[d]["old"] < 1)
+                and not (0 < diff[d]["new"] < 25.4 and 0 < diff[d]["old"] < 25.4)
             ):
                 sentences.append(
-                    "{0}: {1} in. (prev. {2})".format(
+                    "{0}: {1} in. (prev. {2} in.)".format(
                         d.strftime("%a, %-m/%d"),
                         get_accumulation_string(diff[d]["new"]),
                         get_accumulation_string(diff[d]["old"]),
@@ -225,7 +225,7 @@ def run():
     prev_forecast = get_stored_snow_data()
     diff = diff_forecasts(current_forecast, prev_forecast, date_range)
     if ENABLE_FRENCH_TOAST:
-        toast_details = get_french_toast()
+        toast_details = get_french_toast(args.dry_run)
 
     # Form tweets
     sentences = make_forecast_sentences(diff, date_range)
