@@ -39,7 +39,7 @@ def fetch_french_toast():
 def get_stored_toast_data():
     stored = None
     try:
-        with open(os.path.join(__location__, "toast.json"), "r") as f:
+        with open(os.path.join(__location__, "..", "data/toast.json"), "r") as f:
             stored = json.load(f)
     finally:
         return stored
@@ -77,7 +77,7 @@ def make_french_toast_sentence(current, stored):
 
 def store_french_toast(current, gif_last_tweeted):
     toast_to_store = {"level": current, "gif_last_tweeted": gif_last_tweeted}
-    with open(os.path.join(__location__, "toast.json"), "w") as f:
+    with open(os.path.join(__location__, "..", "data/toast.json"), "w") as f:
         json.dump(toast_to_store, f, indent=2)
 
 

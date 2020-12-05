@@ -32,7 +32,7 @@ HEADERS = {"user-agent": "{name} {url}".format(name=APP_NAME, url=REPO_URL)}
 
 def log(message):
     """Write message to a logfile."""
-    with open(os.path.join(__location__, "snowbot.log"), "a") as f:
+    with open(os.path.join(__location__, "..", "snowbot.log"), "a") as f:
         f.write("\n" + datetime.today().strftime("%H:%M %Y-%m-%d") + " " + message)
 
 

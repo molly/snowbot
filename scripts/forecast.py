@@ -64,7 +64,7 @@ def parse_snow_data(data, date_range):
 def get_stored_snow_data():
     stored = None
     try:
-        with open(os.path.join(__location__, "weather.json"), "r") as f:
+        with open(os.path.join(__location__, "..", "data/weather.json"), "r") as f:
             stored = json.load(f)
     finally:
         return stored
@@ -124,5 +124,5 @@ def store_forecast(current_forecast):
     forecast_to_store = {}
     for key, val in current_forecast.items():
         forecast_to_store[key.isoformat()] = val
-    with open(os.path.join(__location__, "weather.json"), "w") as f:
+    with open(os.path.join(__location__, "..", "data/weather.json"), "w") as f:
         json.dump(forecast_to_store, f, indent=2)
