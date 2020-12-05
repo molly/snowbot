@@ -126,8 +126,7 @@ def diff_forecasts(current_forecast, prev_forecast, date_range):
         elif (
             prev_forecast
             and isodate in prev_forecast
-            and prev_forecast[isodate] != current_forecast[d]
-            and not (0 < prev_forecast[isodate] < 1 and 0 < current_forecast[d] < 1)
+            and (current_forecast[d] > 0 or prev_forecast[isodate] > 0)
         ):
             diff[d] = {
                 "new": current_forecast[d],
@@ -142,7 +141,11 @@ def make_forecast_sentences(diff, date_range):
     sentences = []
     for d in date_range:
         if d in diff:
-            if "old" in diff[d]:
+            if (
+                "old" in diff[d]
+                and diff[d]["new"] != diff[d]["old"]
+                and not (0 < diff[d]["new"] < 1 and 0 < diff[d]["old"] < 1)
+            ):
                 sentences.append(
                     "{0}: {1} in. (prev. {2})".format(
                         d.strftime("%a, %-m/%d"),
@@ -151,6 +154,8 @@ def make_forecast_sentences(diff, date_range):
                     )
                 )
             else:
+                # Either we don't have data on the old forecast, or the old forecast
+                # has not changed. Just print the current forecast.
                 sentences.append(
                     "{0}: {1} in.".format(
                         d.strftime("%a, %-m/%d"),

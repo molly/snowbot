@@ -55,7 +55,7 @@ def make_french_toast_emojis(current):
     elif current == "high":
         emojis = " ".join(["🔴", "🚨", "🔴"])
     elif current == "elevated":
-        emojis = " ".join("⚠️", "⚠️", "⚠️")
+        emojis = " ".join(["⚠️", "⚠️", "⚠️"])
     if len(emojis):
         return emojis + " " + french_toast_emojis + " " + emojis[::-1]
     return emojis
