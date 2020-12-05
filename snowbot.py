@@ -19,12 +19,10 @@
 # SOFTWARE.
 
 
-from datetime import date, datetime, timedelta
+import argparse
+from datetime import date, timedelta
 from pytz import timezone
 import json
-import os
-import re
-import requests
 import tweepy
 
 from french_toast import get_french_toast
@@ -206,7 +204,20 @@ def store_forecast(current_forecast):
         json.dump(forecast_to_store, f, indent=2)
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--dry-run",
+        help="dry run without sending any tweets or storing the new forecast",
+        action="store_true",
+    )
+    args = parser.parse_args()
+    return args
+
+
 def run():
+    args = parse_args()
+
     # Gather forecast, etc. data
     snow_data = get_snow_data()
     date_range = get_date_range()
@@ -224,20 +235,33 @@ def run():
         tweets = make_tweets(sentences)
 
     # Send tweets
-    if len(tweets):
-        send_tweets(tweets)
-    else:
-        log("No changed forecast to tweet.")
-    if ENABLE_FRENCH_TOAST:
-        should_tweet_gif = get_should_tweet_gif(
-            toast_details["current_toast_level"], toast_details["gif_last_tweeted"]
-        )
-        if should_tweet_gif:
-            log("Tweeting toast gif.")
-            send_tweets([SEVERE_TOAST_GIF])
+    if not args.dry_run:
+        if len(tweets):
+            send_tweets(tweets)
+        else:
+            log("No changed forecast to tweet.")
+        if ENABLE_FRENCH_TOAST:
+            should_tweet_gif = get_should_tweet_gif(
+                toast_details["current_toast_level"], toast_details["gif_last_tweeted"]
+            )
+            if should_tweet_gif:
+                log("Tweeting toast gif.")
+                send_tweets([SEVERE_TOAST_GIF])
 
-    # Store forecast for next time
-    store_forecast(current_forecast)
+        # Store forecast for next time
+        store_forecast(current_forecast)
+    else:
+        if len(tweets):
+            print("Would tweet:")
+            [print(tweet) for tweet in tweets]
+        else:
+            print("No changed forecast to tweet.")
+        if ENABLE_FRENCH_TOAST:
+            should_tweet_gif = get_should_tweet_gif(
+                toast_details["current_toast_level"], toast_details["gif_last_tweeted"]
+            )
+            if should_tweet_gif:
+                print(SEVERE_TOAST_GIF)
 
 
 if __name__ == "__main__":
