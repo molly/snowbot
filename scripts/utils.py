@@ -57,6 +57,10 @@ def parse_duration_string(validTime):
     return validTime.split("/PT")
 
 
+def get_duration_as_int(duration):
+    return int(duration.strip("H"))
+
+
 def get_accumulation_string(accum):
     if accum == 0:
         return 0

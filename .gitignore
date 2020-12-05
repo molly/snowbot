@@ -56,7 +56,7 @@ target/
 secrets.py
 .DS_Store
 .idea/
-weather.json
-toast.json
+scripts/weather.json
+scripts/toast.json
 snowbot.log
 venv/

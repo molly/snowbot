@@ -20,7 +20,7 @@
 
 import json
 import re
-from utils import *
+from scripts.utils import *
 
 FRENCH_TOAST_URL = "http://universalhub.com/toast.xml"
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))

@@ -20,147 +20,15 @@
 
 
 import argparse
-from datetime import date, timedelta
-from pytz import timezone
-import json
 import tweepy
 
-from french_toast import get_french_toast
-from config import *
 from secrets import *
-from utils import *
+from scripts.forecast import *
+from scripts.french_toast import get_french_toast
+from scripts.utils import *
 
 FORECAST_API_URL = "https://api.weather.gov/gridpoints/{office}/{grid_x},{grid_y}"
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-
-
-def get_date_range():
-    today = date.today()
-    return [today + timedelta(days=x) for x in range(6)]
-
-
-def get_snow_data():
-    url = FORECAST_API_URL.format(office=OFFICE, grid_x=GRID_X, grid_y=GRID_Y)
-    data = fetch(url, True)
-    return {
-        "snowfallAmount": data["properties"]["snowfallAmount"],
-        "probabilityOfPrecipitation": data["properties"]["probabilityOfPrecipitation"],
-    }
-
-
-def get_probability_for_duration(datetime_str, start_time, duration, data):
-    numeric_duration = int(duration.strip("H"))
-    total_duration = 0
-    probability = []
-    ind, curr_probability = next(
-        (
-            (ind, x)
-            for ind, x in enumerate(data["probabilityOfPrecipitation"]["values"])
-            if x["validTime"].startswith(datetime_str)
-        ),
-        (None, None),
-    )
-    if ind is None:
-        log("Couldn't find corresponding probability for snowfall period")
-        return 0
-    else:
-        curr_duration = parse_duration_string(curr_probability["validTime"])[1]
-        if curr_duration != duration:
-            while total_duration < numeric_duration:
-                numeric_curr_duration = int(curr_duration.strip("H"))
-                total_duration += numeric_curr_duration
-                probability.append(
-                    {
-                        "numeric_duration": numeric_curr_duration,
-                        "probability": curr_probability["value"],
-                    }
-                )
-                ind += 1
-                curr_probability = data["probabilityOfPrecipitation"]["values"][ind]
-                curr_duration = parse_duration_string(curr_probability["validTime"])[1]
-            hourly_probability = sum(
-                [x["probability"] * x["numeric_duration"] for x in probability]
-            ) / sum([x["numeric_duration"] for x in probability])
-            return hourly_probability
-        else:
-            return curr_probability["value"]
-
-
-def parse_snow_data(data, date_range):
-    weather = {d: 0 for d in date_range}
-    tz = timezone(TIMEZONE)
-    amounts = data["snowfallAmount"]["values"]
-    for amount in amounts:
-        if amount["value"] > 0:
-            [datetime_str, duration] = parse_duration_string(amount["validTime"])
-            start_time = datetime.fromisoformat(datetime_str).astimezone(tz)
-            if start_time.date() in weather:
-                # Find probability of snowfall for this given duration
-                probability = get_probability_for_duration(
-                    datetime_str, start_time, duration, data
-                )
-                if probability >= PROBABILITY_THRESHOLD:
-                    weather[start_time.date()] += amount["value"]
-    return weather
-
-
-def get_stored_snow_data():
-    stored = None
-    try:
-        with open(os.path.join(__location__, "weather.json"), "r") as f:
-            stored = json.load(f)
-    finally:
-        return stored
-
-
-def diff_forecasts(current_forecast, prev_forecast, date_range):
-    diff = {}
-    for d in date_range:
-        isodate = d.isoformat()
-        if (not prev_forecast or isodate not in prev_forecast) and current_forecast[
-            d
-        ] > 0:
-            diff[d] = {"new": current_forecast[d]}
-        elif (
-            prev_forecast
-            and isodate in prev_forecast
-            and (current_forecast[d] > 0 or prev_forecast[isodate] > 0)
-        ):
-            diff[d] = {
-                "new": current_forecast[d],
-                "old": prev_forecast[isodate],
-            }
-    return diff
-
-
-def make_forecast_sentences(diff, date_range):
-    if not diff:
-        return
-    sentences = []
-    for d in date_range:
-        if d in diff:
-            if (
-                "old" in diff[d]
-                and diff[d]["new"] != diff[d]["old"]
-                and not (0 < diff[d]["new"] < 25.4 and 0 < diff[d]["old"] < 25.4)
-            ):
-                sentences.append(
-                    "{0}: {1} in. (prev. {2} in.)".format(
-                        d.strftime("%a, %-m/%d"),
-                        get_accumulation_string(diff[d]["new"]),
-                        get_accumulation_string(diff[d]["old"]),
-                    )
-                )
-            else:
-                # Either we don't have data on the old forecast, or the old forecast
-                # has not changed. Just print the current forecast.
-                sentences.append(
-                    "{0}: {1} in.".format(
-                        d.strftime("%a, %-m/%d"),
-                        get_accumulation_string(diff[d]["new"]),
-                    )
-                )
-    return sentences
 
 
 def make_tweets(sentences, append=None):
@@ -194,14 +62,6 @@ def send_tweets(tweets):
             log('Tweeted: "' + tweet)
         except tweepy.TweepError as e:
             log("Failed to tweet: " + e.reason)
-
-
-def store_forecast(current_forecast):
-    forecast_to_store = {}
-    for key, val in current_forecast.items():
-        forecast_to_store[key.isoformat()] = val
-    with open(os.path.join(__location__, "weather.json"), "w") as f:
-        json.dump(forecast_to_store, f, indent=2)
 
 
 def parse_args():
