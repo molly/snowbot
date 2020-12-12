@@ -111,6 +111,8 @@ def make_forecast_sentences(diff, date_range):
                     )
                 )
             else:
+                if "old" not in diff[d]:
+                    has_changed_forecast = True
                 # Either we don't have data on the old forecast, or the old forecast
                 # has not changed. Just print the current forecast.
                 sentences.append(
