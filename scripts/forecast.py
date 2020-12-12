@@ -93,6 +93,7 @@ def diff_forecasts(current_forecast, prev_forecast, date_range):
 def make_forecast_sentences(diff, date_range):
     if not diff:
         return
+    has_changed_forecast = False
     sentences = []
     for d in date_range:
         if d in diff:
@@ -101,6 +102,7 @@ def make_forecast_sentences(diff, date_range):
                 and diff[d]["new"] != diff[d]["old"]
                 and not (0 < diff[d]["new"] < 25.4 and 0 < diff[d]["old"] < 25.4)
             ):
+                has_changed_forecast = True
                 sentences.append(
                     "{0}: {1} in. (prev. {2} in.)".format(
                         d.strftime("%a, %-m/%d"),
@@ -117,7 +119,7 @@ def make_forecast_sentences(diff, date_range):
                         get_accumulation_string(diff[d]["new"]),
                     )
                 )
-    return sentences
+    return sentences if has_changed_forecast else []
 
 
 def store_forecast(current_forecast):
