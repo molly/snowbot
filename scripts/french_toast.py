@@ -29,10 +29,10 @@ __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file
 def fetch_french_toast():
     """Fetch french toast level from Universal Hub."""
     toast = fetch(FRENCH_TOAST_URL)
-    m = re.search(r"<status>(.*?)</status>", toast)
+    m = re.search(r"<status>.*?-\s?(.*?)</status>", toast)
     if m:
         level = m.group(1)
-        return level
+        return level.lower()
     return None
 
 
