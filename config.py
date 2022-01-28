@@ -19,4 +19,4 @@ ENABLE_FRENCH_TOAST = True
 # Delay between tweeting toast level gif if the above is set to True
 TOAST_GIF_DELAY = 24 * 60 * 60  # 24 hours
 # GIF to tweet if the french toast level is "severe"
-SEVERE_TOAST_GIF = "https://www.mollywhite.net/storage/breadandmilk.gif"
+SEVERE_TOAST_GIF = "https://t.co/Bs8UzBRswG"
